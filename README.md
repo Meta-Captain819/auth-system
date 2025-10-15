@@ -1,36 +1,232 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# 🔐 Secure Auth System
 
-## Getting Started
+A modern, production-ready authentication system built with Next.js 15, NextAuth.js, MongoDB, and Prisma. Manage your favorite songs collection with secure user authentication.
 
-First, run the development server:
+## ✨ Features
 
+### 🔒 **Security**
+- **Bcrypt Password Hashing**: Passwords are securely hashed with bcrypt (salt rounds: 10)
+- **Password Strength Validation**: 
+  - Minimum 8 characters
+  - At least one uppercase letter
+  - At least one lowercase letter
+  - At least one number
+  - At least one special character
+- **Protected Routes**: Middleware-based authentication for sensitive pages
+- **JWT Sessions**: Secure session management with NextAuth.js
+
+### 🎨 **User Experience**
+- **Toast Notifications**: Real-time feedback with react-hot-toast
+- **Loading States**: Visual feedback during async operations
+- **Error Boundaries**: Graceful error handling
+- **Responsive Design**: Mobile-first Tailwind CSS styling
+- **Clean UI**: Modern, intuitive interface
+
+### 🎵 **Favorites Management**
+- Add favorite songs to your personal collection
+- Delete songs from your favorites
+- Real-time updates without page refresh
+- User-specific data isolation
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js 18+ 
+- MongoDB database (local or MongoDB Atlas)
+- pnpm (or npm/yarn)
+
+### Installation
+
+1. **Clone the repository**
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repository-url>
+cd auth-system
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. **Install dependencies**
+```bash
+pnpm install
+```
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+3. **Set up environment variables**
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Create a `.env` file in the root directory:
 
-## Learn More
+```env
+DATABASE_URL=mongodb+srv://username:password@cluster.mongodb.net/database-name
+NEXTAUTH_SECRET=your-secret-key-here
+NEXTAUTH_URL=http://localhost:3000
+```
 
-To learn more about Next.js, take a look at the following resources:
+Generate a secure NextAuth secret:
+```bash
+openssl rand -base64 32
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+4. **Generate Prisma Client**
+```bash
+npx prisma generate
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+5. **Run the development server**
+```bash
+pnpm dev
+```
 
-## Deploy on Vercel
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 📁 Project Structure
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+auth-system/
+├── app/
+│   ├── api/
+│   │   ├── auth/[...nextauth]/  # NextAuth configuration
+│   │   ├── register/            # User registration endpoint
+│   │   └── favorites/           # Favorites CRUD endpoints
+│   ├── favorites/               # Favorites page (protected)
+│   ├── login/                   # Login page
+│   ├── register/                # Registration page
+│   ├── lib/
+│   │   └── prisma.js           # Prisma client instance
+│   ├── layout.js               # Root layout with Toaster
+│   ├── page.js                 # Home page
+│   └── error.js                # Global error boundary
+├── prisma/
+│   └── schema.prisma           # Database schema
+├── middleware.js               # Route protection middleware
+└── .env                        # Environment variables
+```
+
+## 🗄️ Database Schema
+
+### User Model
+```prisma
+model User {
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  name      String?
+  email     String     @unique
+  password  String
+  favorites Favorite[]
+  createdAt DateTime   @default(now())
+}
+```
+
+### Favorite Model
+```prisma
+model Favorite {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  song      String
+  user      User?    @relation(fields: [userId], references: [id])
+  userId    String?  @db.ObjectId
+  createdAt DateTime @default(now())
+}
+```
+
+## 🔐 Authentication Flow
+
+1. **Registration**: 
+   - User submits form → Validation → Password hashing → Database save → Redirect to login
+
+2. **Login**: 
+   - User submits credentials → NextAuth verification → JWT token generation → Session creation
+
+3. **Protected Routes**: 
+   - Middleware checks session → Redirects to login if unauthenticated → Grants access if authenticated
+
+4. **Logout**: 
+   - NextAuth `signOut()` → Session cleared → Redirect to home
+
+## 🛠️ Technology Stack
+
+- **Framework**: Next.js 15.5.5 (App Router with Turbopack)
+- **React**: 19.1.0
+- **Authentication**: NextAuth.js 4.24.11
+- **Database**: MongoDB with Prisma ORM 6.17.1
+- **Styling**: Tailwind CSS 4
+- **Password Hashing**: bcrypt 6.0.0
+- **Notifications**: react-hot-toast 2.6.0
+- **Package Manager**: pnpm
+
+## 📝 API Routes
+
+### POST `/api/register`
+Register a new user with validation.
+
+**Request Body:**
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "SecurePass123!"
+}
+```
+
+### POST `/api/auth/[...nextauth]`
+NextAuth authentication endpoint (handled by NextAuth).
+
+### GET `/api/favorites`
+Get all favorites for the authenticated user.
+
+### POST `/api/favorites`
+Add a new favorite song.
+
+**Request Body:**
+```json
+{
+  "song": "Song Name"
+}
+```
+
+### DELETE `/api/favorites`
+Delete a favorite song by ID.
+
+**Request Body:**
+```json
+{
+  "id": "favorite-id"
+}
+```
+
+## 🧪 Recent Improvements
+
+✅ Fixed import path in favorites API route  
+✅ Fixed schema field mismatch (songName → song)  
+✅ Removed duplicate authOptions file  
+✅ Added comprehensive password strength validation  
+✅ Implemented toast notification system  
+✅ Created middleware for protected routes  
+✅ Added error boundary for better error handling  
+✅ Updated home page with modern design  
+✅ Added server-side password validation  
+✅ Improved loading states across all pages  
+
+## 🔒 Security Best Practices
+
+- ✅ Environment variables for sensitive data
+- ✅ Passwords never stored in plain text
+- ✅ JWT-based session management
+- ✅ Protected API routes with session validation
+- ✅ Input validation on both client and server
+- ✅ Middleware-based route protection
+
+## 📚 Learn More
+
+- [Next.js Documentation](https://nextjs.org/docs)
+- [NextAuth.js Documentation](https://next-auth.js.org)
+- [Prisma Documentation](https://www.prisma.io/docs)
+- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
+
+## 🚀 Deployment
+
+Deploy on [Vercel](https://vercel.com):
+
+1. Push your code to GitHub
+2. Import your repository on Vercel
+3. Add environment variables
+4. Deploy!
+
+## 📄 License
+
+MIT License - feel free to use this project for learning or production.
+
