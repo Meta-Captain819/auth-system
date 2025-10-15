@@ -11,6 +11,12 @@ export async function POST(req) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+
+    if (!session.user?.id) {
+      console.error("User ID missing from session:", session);
+      return NextResponse.json({ error: "User ID not found in session" }, { status: 400 });
+    }
+
     const { song } = await req.json();
 
     if (!song || song.trim() === "") {
@@ -37,6 +43,12 @@ export async function GET() {
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+
+    if (!session.user?.id) {
+      console.error("User ID missing from session:", session);
+      return NextResponse.json({ error: "User ID not found in session" }, { status: 400 });
     }
 
     const favorites = await prisma.favorite.findMany({

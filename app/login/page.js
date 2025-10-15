@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { signIn, useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 
-export default function LoginPage() {
+function LoginForm() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -108,10 +108,25 @@ export default function LoginPage() {
         </form>
 
         <p className="text-sm text-center text-gray-600 mt-4">
-          Don’t have an account?{" "}
+          Don&apos;t have an account?{" "}
           <a href="/register" className="text-blue-600 hover:underline">Register</a>
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="text-6xl mb-4">⏳</div>
+          <p className="text-lg text-gray-700">Loading...</p>
+        </div>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }
